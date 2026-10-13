@@ -1,0 +1,103 @@
+<div class="page">
+
+  <!-- LEFT: brand panel (hidden on small screens) -->
+  <aside class="brand">
+    <div class="brand-content">
+      <div class="logo">TM</div>
+      <h1>Task Manager</h1>
+      <p class="tagline">
+        Create your free account and let the smart scheduler tell you
+        which task to do first.
+      </p>
+      <ul class="features">
+        <li>Smart priority-based schedule</li>
+        <li>Your tasks stay private to you</li>
+        <li>Secure sign-in with JWT</li>
+      </ul>
+    </div>
+  </aside>
+
+  <!-- RIGHT: the form -->
+  <main class="panel">
+    <div class="card">
+      <h2>Create account</h2>
+      <p class="subtitle">It only takes a minute to get started</p>
+
+      <form (ngSubmit)="onSubmit()">
+        <div class="field">
+          <label for="username">Username</label>
+          <input
+            id="username"
+            name="username"
+            type="text"
+            placeholder="Choose a username"
+            autocomplete="username"
+            [(ngModel)]="username"
+            required />
+        </div>
+
+        <div class="field">
+          <label for="email">Email</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            placeholder="you@example.com"
+            autocomplete="email"
+            [(ngModel)]="email"
+            required />
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="password-wrap">
+            <input
+              id="password"
+              name="password"
+              [type]="showPassword() ? 'text' : 'password'"
+              placeholder="At least 6 characters"
+              autocomplete="new-password"
+              [(ngModel)]="password"
+              required />
+            <button type="button" class="toggle" (click)="togglePassword()">
+              {{ showPassword() ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="confirmPassword">Confirm password</label>
+          <input
+            id="confirmPassword"
+            name="confirmPassword"
+            [type]="showPassword() ? 'text' : 'password'"
+            placeholder="Type the password again"
+            autocomplete="new-password"
+            [(ngModel)]="confirmPassword"
+            required />
+        </div>
+
+        @if (error()) {
+          <div class="alert">{{ error() }}</div>
+        }
+
+        <button
+          type="submit"
+          class="submit"
+          [disabled]="loading() || !username() || !email() || !password() || !confirmPassword()">
+          @if (loading()) {
+            <span class="spinner"></span> Creating account...
+          } @else {
+            Create account
+          }
+        </button>
+      </form>
+
+      <p class="switch">
+        <span>Already have an account?</span>
+        <a routerLink="/login">Sign in</a>
+      </p>
+    </div>
+  </main>
+
+</div>

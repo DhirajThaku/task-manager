@@ -1,0 +1,189 @@
+<div class="layout">
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">TM</div>
+      <span class="brand-name">Task Manager</span>
+    </div>
+
+    <div class="user">
+      <span class="hello">Hi, <strong>{{ username }}</strong></span>
+      <button class="btn-outline" (click)="logout()">Logout</button>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <h1>{{ view() === 'all' ? 'My Tasks' : 'Smart Schedule' }}</h1>
+
+    <!-- SUMMARY CARDS -->
+    <section class="stats">
+      <div class="stat">
+        <span class="stat-number">{{ total() }}</span>
+        <span class="stat-label">Total</span>
+      </div>
+      <div class="stat">
+        <span class="stat-number">{{ pending() }}</span>
+        <span class="stat-label">Open</span>
+      </div>
+      <div class="stat">
+        <span class="stat-number">{{ completed() }}</span>
+        <span class="stat-label">Completed</span>
+      </div>
+    </section>
+
+    <!-- TABS + ADD BUTTON -->
+    <div class="toolbar">
+      <div class="tabs">
+        <button class="tab" [class.active]="view() === 'all'" (click)="setView('all')">
+          All Tasks
+        </button>
+        <button class="tab" [class.active]="view() === 'schedule'" (click)="setView('schedule')">
+          Smart Schedule
+        </button>
+      </div>
+
+      <button class="btn-primary" (click)="openAdd()">+ Add Task</button>
+    </div>
+
+    @if (view() === 'schedule') {
+      <div class="info">
+        Tasks are ranked by how urgent they are. Overdue tasks come first,
+        then the nearest deadlines. Higher priority moves a task up, and
+        completed tasks are left out.
+      </div>
+    }
+
+    @if (error()) {
+      <div class="alert">{{ error() }}</div>
+    }
+
+    <!-- LOADING / EMPTY / LIST -->
+    @if (loading()) {
+      <p class="muted">Loading your tasks...</p>
+    } @else if (visibleTasks().length === 0 && !error()) {
+      <div class="empty">
+        @if (view() === 'schedule') {
+          <h3>Nothing to schedule</h3>
+          <p>You have no open tasks. Completed tasks don't appear here.</p>
+        } @else {
+          <h3>No tasks yet</h3>
+          <p>Click "+ Add Task" to create your first one.</p>
+        }
+      </div>
+    } @else {
+      <ul class="task-list">
+        @for (task of visibleTasks(); track task.id; let i = $index) {
+          <li class="task" [class.done]="task.status === 'COMPLETED'">
+
+            @if (view() === 'schedule') {
+              <div class="rank">{{ i + 1 }}</div>
+            }
+
+            <div class="task-main">
+              <h3 class="task-title">{{ task.title }}</h3>
+              @if (task.description) {
+                <p class="task-desc">{{ task.description }}</p>
+              }
+
+              <div class="meta">
+                <span class="badge" [class]="'badge priority-' + task.priority.toLowerCase()">
+                  {{ task.priority }}
+                </span>
+                <span class="badge" [class]="'badge status-' + task.status.toLowerCase()">
+                  {{ task.status.replace('_', ' ') }}
+                </span>
+
+                @if (task.deadline) {
+                  <span class="deadline" [class.overdue]="isOverdue(task)">
+                    Due {{ task.deadline | date: 'dd MMM yyyy, h:mm a' }}
+                    @if (isOverdue(task)) { (overdue) }
+                  </span>
+                } @else {
+                  <span class="deadline">No deadline</span>
+                }
+              </div>
+            </div>
+
+            <div class="task-actions">
+              @if (task.status !== 'COMPLETED') {
+                <button class="btn-done" (click)="markDone(task)">Done</button>
+              }
+              <button class="btn-edit" (click)="openEdit(task)">Edit</button>
+              <button class="btn-danger" (click)="deleteTask(task)">Delete</button>
+            </div>
+
+          </li>
+        }
+      </ul>
+    }
+
+  </main>
+</div>
+
+<!-- ADD / EDIT POP-UP -->
+@if (formOpen()) {
+  <div class="backdrop" (click)="closeForm()">
+    <!-- stopPropagation: clicking inside the box must not close it -->
+    <div class="modal" (click)="$event.stopPropagation()">
+
+      <h2>{{ editingId() === null ? 'Add Task' : 'Edit Task' }}</h2>
+
+      <form (ngSubmit)="saveTask()">
+
+        <div class="field">
+          <label for="title">Title</label>
+          <input id="title" name="title" type="text" maxlength="150"
+                 placeholder="What needs to be done?"
+                 [(ngModel)]="fTitle" />
+        </div>
+
+        <div class="field">
+          <label for="description">Description (optional)</label>
+          <textarea id="description" name="description" rows="3" maxlength="1000"
+                    placeholder="Add some details"
+                    [(ngModel)]="fDescription"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="deadline">Deadline (optional)</label>
+          <input id="deadline" name="deadline" type="datetime-local"
+                 [(ngModel)]="fDeadline" />
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="priority">Priority</label>
+            <select id="priority" name="priority" [(ngModel)]="fPriority">
+              @for (p of priorities; track p) {
+                <option [value]="p">{{ p }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="status">Status</label>
+            <select id="status" name="status" [(ngModel)]="fStatus">
+              @for (s of statuses; track s) {
+                <option [value]="s">{{ s.replace('_', ' ') }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        @if (formError()) {
+          <div class="alert">{{ formError() }}</div>
+        }
+
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" (click)="closeForm()">Cancel</button>
+          <button type="submit" class="btn-primary" [disabled]="saving()">
+            {{ saving() ? 'Saving...' : 'Save' }}
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+}
