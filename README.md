@@ -63,5 +63,12 @@ Angular (Component -> Service -> HttpClient -> interceptor adds JWT)
 - Domain exceptions + `@RestControllerAdvice` for one error format
 - Known limitation: token is in localStorage; an HttpOnly cookie would be safer
 
+
+## Run with Docker
+```
+docker compose up --build
+```
+Then open http://localhost:4200
+
 ## Future work
-Pagination, refresh tokens, Docker, unit tests
+Pagination, refresh tokens
